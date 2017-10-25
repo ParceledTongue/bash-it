@@ -13,6 +13,8 @@ SCM_THEME_PROMPT_DIRTY=' ✗'
 SCM_THEME_PROMPT_CLEAN=' ✓'
 SCM_THEME_PROMPT_PREFIX=' |'
 SCM_THEME_PROMPT_SUFFIX='|'
+SCM_THEME_BOOKMARK_PREFIX='🔖  '
+SCM_THEME_BOOKMARK_SUFFIX=' - '
 SCM_THEME_BRANCH_PREFIX=''
 SCM_THEME_TAG_PREFIX='tag:'
 SCM_THEME_DETACHED_PREFIX='detached:'
@@ -315,23 +317,30 @@ function get_hg_root {
 
 function hg_prompt_vars {
     if [[ -n $(hg status 2> /dev/null) ]]; then
-      SCM_DIRTY=1
+        SCM_DIRTY=1
         SCM_STATE=${HG_THEME_PROMPT_DIRTY:-$SCM_THEME_PROMPT_DIRTY}
     else
-      SCM_DIRTY=0
+        SCM_DIRTY=0
         SCM_STATE=${HG_THEME_PROMPT_CLEAN:-$SCM_THEME_PROMPT_CLEAN}
     fi
     SCM_PREFIX=${HG_THEME_PROMPT_PREFIX:-$SCM_THEME_PROMPT_PREFIX}
     SCM_SUFFIX=${HG_THEME_PROMPT_SUFFIX:-$SCM_THEME_PROMPT_SUFFIX}
 
     HG_ROOT=$(get_hg_root)
+  
+    local bookmark_prefix=${HG_THEME_BOOKMARK_PREFIX:-$SCM_THEME_BOOKMARK_PREFIX}
+    local bookmark_suffix=${HG_THEME_BOOKMARK_SUFFIX:-$SCM_THEME_BOOKMARK_SUFFIX}
+    if [ -f "$HG_ROOT/bookmarks.current" ]; then
+        SCM_BOOKMARK="$bookmark_prefix$(cat "$HG_ROOT/bookmarks.current")$bookmark_suffix"
+    else
+        # This is normal, it just means there's no current bookmark.
+        # We won't display any bookmark info in this case.
+        SCM_BOOKMARK=""
+    fi
 
     if [ -f "$HG_ROOT/branch" ]; then
-        # Mercurial holds it's current branch in .hg/branch file
+        # Mercurial holds its current branch in .hg/branch file
         SCM_BRANCH=$(cat "$HG_ROOT/branch")
-        if [ -f "$HG_ROOT/bookmarks.current" ]; then
-            SCM_BRANCH="[$(cat "$HG_ROOT/bookmarks.current")] $SCM_BRANCH"
-        fi
     else
         SCM_BRANCH=$(hg summary 2> /dev/null | grep branch: | awk '{print $2}')
     fi
@@ -459,7 +468,7 @@ function svn_prompt_info {
 
 function hg_prompt_info() {
   hg_prompt_vars
-  echo -e "${SCM_PREFIX}${SCM_BRANCH}:${SCM_STATE}${SCM_SUFFIX}"
+  echo -e "${SCM_PREFIX}${SCM_BOOKMARK}${SCM_BRANCH}${SCM_STATE}${SCM_SUFFIX}"
 }
 
 function scm_char {
