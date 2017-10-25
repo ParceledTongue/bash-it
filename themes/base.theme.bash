@@ -329,6 +329,9 @@ function hg_prompt_vars {
     if [ -f "$HG_ROOT/branch" ]; then
         # Mercurial holds it's current branch in .hg/branch file
         SCM_BRANCH=$(cat "$HG_ROOT/branch")
+        if [ -f "$HG_ROOT/bookmarks.current" ]; then
+            SCM_BRANCH="[$(cat "$HG_ROOT/bookmarks.current")] $SCM_BRANCH"
+        fi
     else
         SCM_BRANCH=$(hg summary 2> /dev/null | grep branch: | awk '{print $2}')
     fi
@@ -456,7 +459,7 @@ function svn_prompt_info {
 
 function hg_prompt_info() {
   hg_prompt_vars
-  echo -e "${SCM_PREFIX}${SCM_BRANCH}:${SCM_CHANGE#*:}${SCM_STATE}${SCM_SUFFIX}"
+  echo -e "${SCM_PREFIX}${SCM_BRANCH}:${SCM_STATE}${SCM_SUFFIX}"
 }
 
 function scm_char {
